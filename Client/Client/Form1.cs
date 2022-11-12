@@ -10,17 +10,30 @@ namespace Client
 {
     public partial class Form1 : Form
     {
-        string ip;
-        string port;
+        string ip = "localhost";
+        string port = "1111";
         int portNum;
 
         string name;
         bool terminating = false;
         bool connected = false;
 
-        bool validName = false;
+        bool isNameRegistered = false;
 
         Socket clientSocket;
+
+        public void ensureNameRegistered()
+        {
+            if (!isNameRegistered)
+            {
+                //send client name to check if it is unique
+                //format: 'operation:name'
+                //e.g. 'registerName:Alper'
+                string messageRegister = "registerName" + ":" + name;
+                Byte[] buffer = Encoding.Default.GetBytes(messageRegister);
+                clientSocket.Send(buffer);
+            }
+        }
 
         public Form1()
         {
@@ -44,7 +57,7 @@ namespace Client
         private void ThreadReceiveFunction()
         {
             //first, try to authenticate ourselves
-            if (!validName)
+            if (!isNameRegistered)
             {
                 while (connected)
                 {
@@ -54,11 +67,14 @@ namespace Client
                     string messageReceived = Encoding.Default.GetString(bufferReceived);
                     messageReceived = messageReceived.Trim('\0');
 
-                    if (messageReceived == "validName")
+                    if (messageReceived == "VALID-NAME")
                     {
-                        validName = true;
+                        isNameRegistered = true;
+                        Byte[] bufferReceivedNameRegister = new Byte[64];
+                        richTextBox_logs.AppendText("Successful register.");
+
                     }
-                    else if (messageReceived == "invalidName")
+                    else if (messageReceived == "INVALID-NAME")
                     {
                         richTextBox_logs.AppendText("This name is already taken! Please provide another name.\n");
                     }
@@ -100,6 +116,7 @@ namespace Client
                         }
                         connected = false;
                         clientSocket.Close();
+                        richTextBox_logs.AppendText("A client has disconnected.\n");
                     }
                 }
             }
@@ -111,17 +128,16 @@ namespace Client
         private void button_connect_Click(object sender, EventArgs e)
         {
             terminating = false;
-            ip = textBox_ip.Text;
-            port = textBox_port.Text;
+            ///TODO
+            //ip = textBox_ip.Text;
+            //port = textBox_port.Text;
             name = textBox_name.Text;
 
             if (name != "")
             {
                 clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-                bool convertedPortToInt = Int32.TryParse(port, out portNum);
-
-                if (convertedPortToInt)
+                if (Int32.TryParse(port, out portNum))
                 {
                     try
                     {
@@ -139,9 +155,9 @@ namespace Client
     
                         richTextBox_logs.AppendText("Connected to the server." + "\n");
 
-                        //send client name to check if it is unique
-                        Byte[] bufferToSend = Encoding.Default.GetBytes(name); 
-                        clientSocket.Send(bufferToSend);
+
+                        ensureNameRegistered();
+
 
                         Thread receiveThread = new Thread(ThreadReceiveFunction);
                         receiveThread.Start();

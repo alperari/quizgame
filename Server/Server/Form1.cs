@@ -10,11 +10,13 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace server
 {
     public partial class Form1 : Form
     {
+        List<string> names = new List<string>();
 
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         List<Socket> clientSockets = new List<Socket>();
@@ -22,6 +24,26 @@ namespace server
         bool terminating = false;
         bool listening = false;
         string serverIP;
+
+        public void RegisterName(Socket thisClient, string name)
+        {
+            bool isNameRegistered = names.Contains(name);
+            if (isNameRegistered)
+            {
+                string message = "INVALID-NAME";
+                Byte[] buffer = Encoding.Default.GetBytes(message);
+
+                thisClient.Send(buffer);
+            }
+            else
+            {
+                string message = "VALID-NAME";
+                Byte[] buffer = Encoding.Default.GetBytes(message);
+
+                thisClient.Send(buffer);
+                names.Add(name);
+            }
+        }
 
         public Form1()
         {
@@ -106,6 +128,19 @@ namespace server
                     string incomingMessage = Encoding.Default.GetString(buffer);
                     incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
                     logs.AppendText("Client: " + incomingMessage + "\n");
+
+
+                    string[] parsedIncomingMessage = incomingMessage.Split(':');
+                    string operation = parsedIncomingMessage[0];
+
+                    Debug.WriteLine(parsedIncomingMessage[0]);
+                    Debug.WriteLine(parsedIncomingMessage[1]);
+                    if(operation == "registerName")
+                    {
+                        string name = parsedIncomingMessage[1];
+                        RegisterName(thisClient, name);
+                    }
+
                 }
                 catch
                 {
