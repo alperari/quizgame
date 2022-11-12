@@ -129,7 +129,13 @@ namespace Client
 
                         button_connect.Enabled = false;
                         button_disconnect.Enabled = true;
+                        button_send.Enabled = true;
+                        textBox_message.Enabled = true;
+                        textBox_ip.Enabled = false;
+                        textBox_port.Enabled = false;
+                        textBox_name.Enabled = false;
                         connected = true;
+
     
                         richTextBox_logs.AppendText("Connected to the server." + "\n");
 
@@ -156,6 +162,19 @@ namespace Client
                 richTextBox_logs.AppendText("Please enter a valid name!\n");
             }
 
+        }
+
+        private void button_disconnect_Click(object sender, EventArgs e)
+        {
+            connected = false;
+            button_connect.Enabled=true;
+            button_disconnect.Enabled=false;
+
+            button_send.Enabled=false;
+            textBox_message.Enabled=false;
+            textBox_ip.Enabled = false;
+            textBox_port.Enabled = false;
+            textBox_name.Enabled = false;
         }
     }
 }

@@ -35,7 +35,7 @@
             this.textBox_port = new System.Windows.Forms.TextBox();
             this.textBox_name = new System.Windows.Forms.TextBox();
             this.richTextBox_logs = new System.Windows.Forms.RichTextBox();
-            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.textBox_message = new System.Windows.Forms.TextBox();
             this.button_connect = new System.Windows.Forms.Button();
             this.button_disconnect = new System.Windows.Forms.Button();
             this.button_send = new System.Windows.Forms.Button();
@@ -99,12 +99,13 @@
             this.richTextBox_logs.TabIndex = 6;
             this.richTextBox_logs.Text = "";
             // 
-            // textBox4
+            // textBox_message
             // 
-            this.textBox4.Location = new System.Drawing.Point(337, 344);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(296, 23);
-            this.textBox4.TabIndex = 7;
+            this.textBox_message.Enabled = false;
+            this.textBox_message.Location = new System.Drawing.Point(337, 344);
+            this.textBox_message.Name = "textBox_message";
+            this.textBox_message.Size = new System.Drawing.Size(296, 23);
+            this.textBox_message.TabIndex = 7;
             // 
             // button_connect
             // 
@@ -119,16 +120,19 @@
             // button_disconnect
             // 
             this.button_disconnect.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.button_disconnect.Enabled = false;
             this.button_disconnect.Location = new System.Drawing.Point(215, 192);
             this.button_disconnect.Name = "button_disconnect";
             this.button_disconnect.Size = new System.Drawing.Size(75, 37);
             this.button_disconnect.TabIndex = 9;
             this.button_disconnect.Text = "Disconnect";
             this.button_disconnect.UseVisualStyleBackColor = true;
+            this.button_disconnect.Click += new System.EventHandler(this.button_disconnect_Click);
             // 
             // button_send
             // 
             this.button_send.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.button_send.Enabled = false;
             this.button_send.Location = new System.Drawing.Point(654, 344);
             this.button_send.Name = "button_send";
             this.button_send.Size = new System.Drawing.Size(75, 23);
@@ -164,7 +168,7 @@
             this.Controls.Add(this.button_send);
             this.Controls.Add(this.button_disconnect);
             this.Controls.Add(this.button_connect);
-            this.Controls.Add(this.textBox4);
+            this.Controls.Add(this.textBox_message);
             this.Controls.Add(this.richTextBox_logs);
             this.Controls.Add(this.textBox_name);
             this.Controls.Add(this.textBox_port);
@@ -189,7 +193,7 @@
         private TextBox textBox_port;
         private TextBox textBox_name;
         private RichTextBox richTextBox_logs;
-        private TextBox textBox4;
+        private TextBox textBox_message;
         private Button button_connect;
         private Button button_disconnect;
         private Button button_send;
