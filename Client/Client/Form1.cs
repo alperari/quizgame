@@ -129,8 +129,8 @@ namespace Client
         {
             terminating = false;
             ///TODO
-            //ip = textBox_ip.Text;
-            //port = textBox_port.Text;
+            ip = textBox_ip.Text;
+            port = textBox_port.Text;
             name = textBox_name.Text;
 
             if (name != "")
