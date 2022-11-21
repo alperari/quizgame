@@ -52,11 +52,11 @@ namespace Client
 
         public string receiveMessageFromServer()
         {
-            Byte[] buffer = new Byte[1000];
+            Byte[] buffer = new Byte[30];
             clientSocket.Receive(buffer);
 
             string incomingMessage = Encoding.UTF8.GetString(buffer);
-            incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+            incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
             return incomingMessage;
         }
@@ -176,9 +176,9 @@ namespace Client
                         sendMessageToServer(registerMessage);
 
 
-                        //string registerResponse = receiveMessageFromServer();
+                        string registerResponse = receiveMessageFromServer();
 
-                        //Debug.WriteLine("registerResponse: "+registerResponse+"\n");
+                        Debug.WriteLine("registerResponse: " + registerResponse + "\n");
 
                         //if(registerResponse == "invalidConnection")
                         //{

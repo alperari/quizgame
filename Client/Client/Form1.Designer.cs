@@ -185,18 +185,18 @@
 
         #endregion
 
-        private Label label_ip;
-        private Label label_port;
-        private Label label_name;
-        private TextBox textBox_ip;
-        private TextBox textBox_port;
-        private TextBox textBox_name;
-        private RichTextBox richTextBox_logs;
-        private TextBox textBox_message;
-        private Button button_connect;
-        private Button button_disconnect;
-        private Button button_send;
-        private Label label4;
-        private Label label5;
+        private System.Windows.Forms.Label label_ip;
+        private System.Windows.Forms.Label label_port;
+        private System.Windows.Forms.Label label_name;
+        private System.Windows.Forms.TextBox textBox_ip;
+        private System.Windows.Forms.TextBox textBox_port;
+        private System.Windows.Forms.TextBox textBox_name;
+        private System.Windows.Forms.RichTextBox richTextBox_logs;
+        private System.Windows.Forms.TextBox textBox_message;
+        private System.Windows.Forms.Button button_connect;
+        private System.Windows.Forms.Button button_disconnect;
+        private System.Windows.Forms.Button button_send;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label5;
     }
 }

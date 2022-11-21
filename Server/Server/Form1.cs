@@ -170,7 +170,8 @@ namespace server
                     if (!names.Contains(name))
                     {
                         logs.AppendText(name + " is connected.\n");
-
+                        sendMessageToClient(thisClient, "invalidConnection");
+                        logs.AppendText("message sent!\n");
                         string message = "validConnection";
                         Byte[] buffer = new Byte[1000];
                         buffer = Encoding.UTF8.GetBytes(message);
