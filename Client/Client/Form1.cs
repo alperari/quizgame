@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace Client
 {
@@ -12,7 +13,7 @@ namespace Client
     {
         string ip = "localhost";
         string port = "1111";
-        int portNum;
+        int portNum = 1111;
 
         string name;
         bool terminating = false;
@@ -22,29 +23,73 @@ namespace Client
 
         Socket clientSocket;
 
-        public void ensureNameRegistered()
+        //public void authenticateMyself()
+        //{
+        //    //send client name to check if it is unique
+        //    //format: 'operation:name'
+        //    //e.g. 'registerName:Alper'
+        //    string messageRegister = "registerName" + ":" + name;
+        //    Byte[] buffer = Encoding.UTF8.GetBytes(messageRegister);
+        //    clientSocket.Send(buffer);
+
+
+        //    Byte[] bufferReceived = new Byte[1000];
+        //    clientSocket.Receive(bufferReceived);
+        //    string incomingMessage = Encoding.UTF8.GetString(bufferReceived);
+        //    incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+
+        //    Debug.WriteLine("incoming message: " + incomingMessage + "\n");
+        //    richTextBox_logs.AppendText("aaaa\n");
+        //    richTextBox_logs.AppendText($"Server: {incomingMessage}\n");
+
+        //}
+
+        public void sendMessageToServer(string message)
         {
-            if (!isNameRegistered)
-            {
-                //send client name to check if it is unique
-                //format: 'operation:name'
-                //e.g. 'registerName:Alper'
-                string messageRegister = "registerName" + ":" + name;
-                Byte[] buffer = Encoding.Default.GetBytes(messageRegister);
-                clientSocket.Send(buffer);
-            }
+            Byte[] bufferToSend = Encoding.UTF8.GetBytes(message);
+            clientSocket.Send(bufferToSend);
         }
+
+        public string receiveMessageFromServer()
+        {
+            Byte[] buffer = new Byte[1000];
+            clientSocket.Receive(buffer);
+
+            string incomingMessage = Encoding.UTF8.GetString(buffer);
+            incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+
+            return incomingMessage;
+        }
+
+        public void Disconnect()
+        {
+            connected = false;
+
+
+            isNameRegistered = false;
+
+            button_connect.Enabled = true;
+            button_disconnect.Enabled = false;
+
+            button_send.Enabled = false;
+            textBox_message.Enabled = false;
+            textBox_ip.Enabled = true;
+            textBox_port.Enabled = true;
+            textBox_name.Enabled = true;
+
+            // Make sure that '.Disconnect()' comes after connected=false
+            // Otherwise receiving thread will keep listening from server even after disconnected (yeah weird)
+            clientSocket.Close();
+            richTextBox_logs.AppendText("Disconnected from the server.\n");
+
+        }
+
 
         public Form1()
         {
             this.FormClosing += new FormClosingEventHandler(closeForm);
             InitializeComponent();
             Control.CheckForIllegalCrossThreadCalls = false;
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
         }
 
         private void closeForm(object sender, System.ComponentModel.CancelEventArgs e)
@@ -57,70 +102,38 @@ namespace Client
         private void ThreadReceiveFunction()
         {
             //first, try to authenticate ourselves
-            if (!isNameRegistered)
+            while (connected)
             {
-                while (connected)
+                //this will keep receiving new messages while it is connected to server
+                try
                 {
-                    Byte[] bufferReceived = new Byte[64];
-                    clientSocket.Receive(bufferReceived);
+                    string messageReceived = receiveMessageFromServer();
 
-                    string messageReceived = Encoding.Default.GetString(bufferReceived);
-                    messageReceived = messageReceived.Trim('\0');
+                    richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
 
-                    if (messageReceived == "VALID-NAME")
+                }
+                catch
+                {
+                    if (!terminating)
                     {
-                        isNameRegistered = true;
-                        Byte[] bufferReceivedNameRegister = new Byte[64];
-                        richTextBox_logs.AppendText("Successful register.");
+                        //this means there is a problem, but it is related with server (e.g. server stops listening)
+                        button_connect.Enabled = true;
+                        button_disconnect.Enabled = false;
+                        button_send.Enabled = false;
+                        textBox_message.Enabled = false;
+                        textBox_name.Enabled = true;
+                        textBox_ip.Enabled = true;
+                        textBox_port.Enabled = true;
+                        richTextBox_logs.AppendText("Server shut down.\n");
 
                     }
-                    else if (messageReceived == "INVALID-NAME")
-                    {
-                        richTextBox_logs.AppendText("This name is already taken! Please provide another name.\n");
-                    }
+
+                    connected = false;
+                    clientSocket.Close();
                 }
             }
-            else
-            {
-                while (connected)
-                {
-                    //this will keep receiving new messages while it is connected to server
-                    try { 
-                        //Lets load those received messages into buffer
-                        Byte[] bufferReceived = new Byte[64];
-                        clientSocket.Receive(bufferReceived);
 
 
-
-                        //convert buffer data into string, by default ASCII
-                        string messageReceived = Encoding.Default.GetString(bufferReceived);
-                        richTextBox_logs.AppendText("Server message: " + messageReceived + "\n");
-
-
-
-                        //Byte[] bufferToSend = Encoding.Default.GetBytes(messageToSend);
-                        //clientSocket.Send(bufferToSend);
-
-                    }
-                    catch
-                    {
-                        if (!terminating)
-                        {
-                            //this means there is a problem, but it is related with server (e.g. server stops listening)
-                            button_connect.Enabled = true;
-
-                        }
-                        else
-                        {
-                            //this means there is a problem, and it is related with client (e.g. client closes the window)
-                        }
-                        connected = false;
-                        clientSocket.Close();
-                        richTextBox_logs.AppendText("A client has disconnected.\n");
-                    }
-                }
-            }
-            
         }
 
 
@@ -129,19 +142,20 @@ namespace Client
         {
             terminating = false;
             ///TODO
-            ip = textBox_ip.Text;
-            port = textBox_port.Text;
+            //ip = textBox_ip.Text;
+            //port = textBox_port.Text;
             name = textBox_name.Text;
 
             if (name != "")
             {
                 clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-                if (Int32.TryParse(port, out portNum))
+                //if (Int32.TryParse(port, out portNum))
+                if (true)
                 {
                     try
                     {
-                        clientSocket.Connect(ip, portNum); //connect and send your name
+                        clientSocket.Connect(ip, portNum);
 
                         button_connect.Enabled = false;
                         button_disconnect.Enabled = true;
@@ -152,15 +166,34 @@ namespace Client
                         textBox_name.Enabled = false;
                         connected = true;
 
-    
-                        richTextBox_logs.AppendText("Connected to the server." + "\n");
+
+                        // Register my name by sending 'registerName' command
+                        // If my name already exists in server,
+                        // Then server will automatically shut my connection down
+                        // I don't need to receive any approval message from server
+                        // Or i don't need to close my connection myself
+                        string registerMessage = "registerName:" + name;
+                        sendMessageToServer(registerMessage);
 
 
-                        ensureNameRegistered();
+                        //string registerResponse = receiveMessageFromServer();
 
+                        //Debug.WriteLine("registerResponse: "+registerResponse+"\n");
 
-                        Thread receiveThread = new Thread(ThreadReceiveFunction);
-                        receiveThread.Start();
+                        //if(registerResponse == "invalidConnection")
+                        //{
+                        //    richTextBox_logs.AppendText("This name is already taken. Please try again.\n");
+                        //}
+                        //else if(registerResponse == "validConnection")
+                        //{
+                        //   // If you reached this line, that means you registered your name successfully
+                        //    richTextBox_logs.AppendText("Connected to the server." + "\n");
+
+                        //    // Now you can start your listening thread
+                        //    Thread receiveThread = new Thread(ThreadReceiveFunction);
+                        //    receiveThread.Start();
+                        //}
+
                     }
                     catch (Exception)
                     {
@@ -175,22 +208,14 @@ namespace Client
             }
             else
             {
-                richTextBox_logs.AppendText("Please enter a valid name!\n");
+                richTextBox_logs.AppendText("Please enter your name!\n");
             }
 
         }
 
         private void button_disconnect_Click(object sender, EventArgs e)
         {
-            connected = false;
-            button_connect.Enabled=true;
-            button_disconnect.Enabled=false;
-
-            button_send.Enabled=false;
-            textBox_message.Enabled=false;
-            textBox_ip.Enabled = false;
-            textBox_port.Enabled = false;
-            textBox_name.Enabled = false;
+            Disconnect();
         }
     }
 }

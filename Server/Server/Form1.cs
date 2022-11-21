@@ -12,14 +12,30 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
 
+
+
+
 namespace server
 {
+    public struct Client
+    {
+        public Socket socket;
+        public string name;
+
+        public Client(Socket s, string n)
+        {
+            socket = s;
+            name = n;
+        }
+    }
+
     public partial class Form1 : Form
     {
-        List<string> names = new List<string>();
 
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        List<Socket> clientSockets = new List<Socket>();
+        
+        List<Client> clientSockets = new List<Client>();
+        List<string> names = new List<string>();
 
         bool terminating = false;
         bool listening = false;
@@ -31,73 +47,93 @@ namespace server
             if (isNameRegistered)
             {
                 string message = "INVALID-NAME";
-                Byte[] buffer = Encoding.Default.GetBytes(message);
-
+                Byte[] buffer = Encoding.UTF8.GetBytes(message);
+                logs.AppendText(name + " is already taken.\n");
                 thisClient.Send(buffer);
             }
             else
             {
                 string message = "VALID-NAME";
-                Byte[] buffer = Encoding.Default.GetBytes(message);
+                Byte[] buffer = Encoding.UTF8.GetBytes(message);
 
                 thisClient.Send(buffer);
+                logs.AppendText(name + " is successfully registered.\n");
+
                 names.Add(name);
             }
         }
 
-        public Form1()
+        public void sendMessageToClient(Client thisClient, string message) // takes socket and message then sends the message to that socket
         {
-            Control.CheckForIllegalCrossThreadCalls = false;
-            this.FormClosing += new FormClosingEventHandler(closeForm);
-            InitializeComponent();
-        }
-        private void closeForm(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            listening = false;
-            terminating = true;
-            Environment.Exit(0);
+            Byte[] buffer = new Byte[1000];
+            buffer = Encoding.UTF8.GetBytes(message);
+            thisClient.socket.Send(buffer);
         }
 
-        private void button_listen_Click(object sender, EventArgs e)
+        public string receiveMessageFromClient(Client thisClient)
         {
-            int serverPort;
+            Byte[] buffer = new Byte[1000];
+            thisClient.socket.Receive(buffer);
 
-            if(Int32.TryParse(textBox_port.Text, out serverPort))
-            {
-                IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
-                serverIP = endPoint.Address.ToString();
-                serverSocket.Bind(endPoint);
-                serverSocket.Listen(3);
+            string incomingMessage = Encoding.UTF8.GetString(buffer);
+            incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
-                listening = true;
-                button_listen.Enabled = false;
-                button_stop.Enabled = true;
-                textBox_message.Enabled = true;
-                button_send.Enabled = true;
-
-                Thread acceptThread = new Thread(Accept);
-                acceptThread.Start();
-
-                logs.AppendText("Started listening on address: " + serverIP + ", on port: " + serverPort + "\n");
-            }
-            else
-            {
-                logs.AppendText("Please check port number!\n");
-            }
+            return incomingMessage;
         }
 
-        private void Accept()
+        //public bool checkAuthorization(Socket thisClient, ref string thisClientName)
+        //{
+        //    Byte[] buffer = new Byte[1000];
+        //    thisClient.Receive(buffer);
+        //    string incomingMessage = Encoding.UTF8.GetString(buffer);
+
+        //    logs.AppendText("Client: " + incomingMessage + "\n");
+
+        //    string[] parsedIncomingMessage = incomingMessage.Split(':');
+        //    string clientOperation = parsedIncomingMessage[0];
+        //    string clientName = parsedIncomingMessage[1];
+
+        //    if(clientOperation == "registerName")
+        //    {
+        //        if (!names.Contains(clientName))
+        //        {
+        //            logs.AppendText($"A client is connected with name: {clientName} \n");
+        //            sendMessageToClient(thisClient, "Successfully registered.\n");
+        //            names.Add(clientName);
+        //            clientSockets.Add(thisClient);
+        //            thisClientName = clientName;
+
+        //            return true;
+        //        }
+        //        else
+        //        {
+        //            //this name is already taken, warn the client and close its connection!
+        //            logs.AppendText("A client tried to connect with an already used name: " + clientName + ". Closed its connection.\n");
+        //            sendMessageToClient(thisClient, "This name is already taken. Please try again.\n");
+        //            thisClient.Close();
+        //            return false;
+        //        }
+        //    }
+        //    return false;
+
+        //}
+
+
+        private void ThreadAcceptFunction()
         {
-            while(listening)
+            while (listening)
             {
                 try
                 {
-                    Socket newClient = serverSocket.Accept();
-                    clientSockets.Add(newClient);
-                    logs.AppendText("A client is connected.\n");
+                    Client newClient = new Client(serverSocket.Accept(), "");
+                    
+                    // Do not add this client into list before making sure it has unique name
+                    //clientSockets.Add(newClient);
 
-                    Thread receiveThread = new Thread(() => Receive(newClient)); // updated
+                    Thread receiveThread = new Thread(() => ThreadReceiveFunction(newClient)); // updated
                     receiveThread.Start();
+                    //}
+
                 }
                 catch
                 {
@@ -114,46 +150,110 @@ namespace server
             }
         }
 
-        private void Receive(Socket thisClient) // updated
+        private void ThreadReceiveFunction(Client thisClient) // updated
         {
             bool connected = true;
 
-            while(connected && !terminating)
+            while (connected && !terminating)
             {
                 try
                 {
-                    Byte[] buffer = new Byte[64];
-                    thisClient.Receive(buffer);
 
-                    string incomingMessage = Encoding.Default.GetString(buffer);
-                    incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
-                    logs.AppendText("Client: " + incomingMessage + "\n");
+                    //Receive registerName:<name> for the first time
+                    string registerMessage= receiveMessageFromClient(thisClient);
+                    logs.AppendText("Client: " + registerMessage + "\n");
 
+                    string[] parsedIncomingMessage = registerMessage.Split(':');
+                    string command = parsedIncomingMessage[0];
+                    string name = parsedIncomingMessage[1];
 
-                    string[] parsedIncomingMessage = incomingMessage.Split(':');
-                    string operation = parsedIncomingMessage[0];
-
-                    Debug.WriteLine(parsedIncomingMessage[0]);
-                    Debug.WriteLine(parsedIncomingMessage[1]);
-                    if(operation == "registerName")
+                    if (!names.Contains(name))
                     {
-                        string name = parsedIncomingMessage[1];
-                        RegisterName(thisClient, name);
+                        logs.AppendText(name + " is connected.\n");
+
+                        string message = "validConnection";
+                        Byte[] buffer = new Byte[1000];
+                        buffer = Encoding.UTF8.GetBytes(message);
+                        thisClient.socket.Send(buffer);
+                        thisClient.name = name;
+
+                        clientSockets.Add(thisClient);
+                        names.Add(name);
                     }
+                    else
+                    {
+                        logs.AppendText(name + " tried to do invalid connection.\n");
+
+                        sendMessageToClient(thisClient, "invalidConnection");
+                        thisClient.socket.Close();
+                        connected = false;
+                    }
+                   
+
+
 
                 }
                 catch
                 {
-                    if(!terminating)
+                    if (!terminating)
                     {
-                        logs.AppendText("A client has disconnected\n");
+                        // That means, the client disconnected itself
+                        logs.AppendText(thisClient.name + " is disconnected.\n");
                     }
-                    thisClient.Close();
                     clientSockets.Remove(thisClient);
+                    //thisClient.socket.Close();
+                    //names.Remove(clientName);
                     connected = false;
                 }
             }
         }
+
+
+        public Form1()
+        {
+            Control.CheckForIllegalCrossThreadCalls = false;
+            this.FormClosing += new FormClosingEventHandler(closeForm);
+            InitializeComponent();
+        }
+        private void closeForm(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            listening = false;
+            terminating = true;
+            //foreach (Socket client in clientSockets)
+            //{
+            //    client.Close(); 
+            //}
+            Environment.Exit(0);
+        }
+
+        private void button_listen_Click(object sender, EventArgs e)
+        {
+            int serverPort;
+
+            if(Int32.TryParse(textBox_port.Text, out serverPort))
+            {
+                IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
+                serverIP = endPoint.Address.ToString();
+                serverSocket.Bind(endPoint);
+                serverSocket.Listen(2);
+
+                listening = true;
+                button_listen.Enabled = false;
+                button_stop.Enabled = true;
+                textBox_message.Enabled = true;
+                button_send.Enabled = true;
+
+                Thread acceptThread = new Thread(ThreadAcceptFunction);
+                acceptThread.Start();
+
+                logs.AppendText("Started listening on address: " + serverIP + ", on port: " + serverPort + "\n");
+            }
+            else
+            {
+                logs.AppendText("Please check port number!\n");
+            }
+        }
+
 
 
         private void button_send_Click(object sender, EventArgs e)
@@ -161,12 +261,12 @@ namespace server
             string message = textBox_message.Text;
             if(message != "" && message.Length <= 64)
             {
-                Byte[] buffer = Encoding.Default.GetBytes(message);
-                foreach (Socket client in clientSockets)
+                Byte[] buffer = Encoding.UTF8.GetBytes(message);
+                foreach (Client client in clientSockets)
                 {
                     try
                     {
-                        client.Send(buffer);
+                        client.socket.Send(buffer);
                     }
                     catch
                     {

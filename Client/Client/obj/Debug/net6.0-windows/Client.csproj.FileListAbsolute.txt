@@ -1,3 +1,8 @@
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.exe
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.deps.json
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.runtimeconfig.json
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.dll
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.pdb
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.csproj.AssemblyReference.cache
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.Form1.resources
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.csproj.GenerateResource.cache
@@ -5,11 +10,6 @@ C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.AssemblyInfoInputs.cache
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.AssemblyInfo.cs
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.csproj.CoreCompileInputs.cache
-C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.exe
-C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.deps.json
-C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.runtimeconfig.json
-C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.dll
-C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\bin\Debug\net6.0-windows\Client.pdb
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.dll
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\refint\Client.dll
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\net6.0-windows\Client.pdb
