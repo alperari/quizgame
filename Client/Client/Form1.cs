@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Net.Sockets;
@@ -23,26 +23,6 @@ namespace Client
 
         Socket clientSocket;
 
-        //public void authenticateMyself()
-        //{
-        //    //send client name to check if it is unique
-        //    //format: 'operation:name'
-        //    //e.g. 'registerName:Alper'
-        //    string messageRegister = "registerName" + ":" + name;
-        //    Byte[] buffer = Encoding.UTF8.GetBytes(messageRegister);
-        //    clientSocket.Send(buffer);
-
-
-        //    Byte[] bufferReceived = new Byte[1000];
-        //    clientSocket.Receive(bufferReceived);
-        //    string incomingMessage = Encoding.UTF8.GetString(bufferReceived);
-        //    incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
-
-        //    Debug.WriteLine("incoming message: " + incomingMessage + "\n");
-        //    richTextBox_logs.AppendText("aaaa\n");
-        //    richTextBox_logs.AppendText($"Server: {incomingMessage}\n");
-
-        //}
 
         public void sendMessageToServer(string message)
         {
@@ -52,19 +32,19 @@ namespace Client
 
         public string receiveMessageFromServer()
         {
-            Byte[] buffer = new Byte[30];
+            Byte[] buffer = new Byte[1000];
             clientSocket.Receive(buffer);
 
             string incomingMessage = Encoding.UTF8.GetString(buffer);
-            incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+            incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
             return incomingMessage;
         }
 
-        public void Disconnect()
+        public void onDisconnectRevertButtons()
         {
             connected = false;
-
+            terminating = true;
 
             isNameRegistered = false;
 
@@ -77,11 +57,9 @@ namespace Client
             textBox_port.Enabled = true;
             textBox_name.Enabled = true;
 
-            // Make sure that '.Disconnect()' comes after connected=false
+            // Make sure that '.Close()' comes after connected=false
             // Otherwise receiving thread will keep listening from server even after disconnected (yeah weird)
-            clientSocket.Close();
-            richTextBox_logs.AppendText("Disconnected from the server.\n");
-
+            //clientSocket.Close();
         }
 
 
@@ -111,6 +89,10 @@ namespace Client
 
                     richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
 
+
+                    ///TODO: Keep receiving questions and send answers
+                    ///
+                    ///
                 }
                 catch
                 {
@@ -127,7 +109,6 @@ namespace Client
                         richTextBox_logs.AppendText("Server shut down.\n");
 
                     }
-
                     connected = false;
                     clientSocket.Close();
                 }
@@ -169,30 +150,30 @@ namespace Client
 
                         // Register my name by sending 'registerName' command
                         // If my name already exists in server,
-                        // Then server will automatically shut my connection down
-                        // I don't need to receive any approval message from server
-                        // Or i don't need to close my connection myself
+                        // Then server will kick you out, you don't have to do clientSocket.Close()!
                         string registerMessage = "registerName:" + name;
                         sendMessageToServer(registerMessage);
 
-
                         string registerResponse = receiveMessageFromServer();
+                        Debug.WriteLine(registerResponse);
 
-                        Debug.WriteLine("registerResponse: " + registerResponse + "\n");
+                        if (registerResponse == "invalidConnection")
+                        {
+                            richTextBox_logs.AppendText("This name is already taken. Please try again.\n");
+                            onDisconnectRevertButtons();
+                            // Don't do clientSocket.Close()!
+                            // Server has done that automatically
 
-                        //if(registerResponse == "invalidConnection")
-                        //{
-                        //    richTextBox_logs.AppendText("This name is already taken. Please try again.\n");
-                        //}
-                        //else if(registerResponse == "validConnection")
-                        //{
-                        //   // If you reached this line, that means you registered your name successfully
-                        //    richTextBox_logs.AppendText("Connected to the server." + "\n");
-
-                        //    // Now you can start your listening thread
-                        //    Thread receiveThread = new Thread(ThreadReceiveFunction);
-                        //    receiveThread.Start();
-                        //}
+                        }
+                        else if (registerResponse == "validConnection")
+                        {
+                            // If you reach this line, that means you registered your name successfully
+                            richTextBox_logs.AppendText("Connected to the server." + "\n");
+                            
+                            // Now you can start your listening thread
+                            Thread receiveThread = new Thread(ThreadReceiveFunction);
+                            receiveThread.Start();
+                        }
 
                     }
                     catch (Exception)
@@ -215,7 +196,10 @@ namespace Client
 
         private void button_disconnect_Click(object sender, EventArgs e)
         {
-            Disconnect();
+            clientSocket.Close();
+            onDisconnectRevertButtons();
+            richTextBox_logs.AppendText("Disconnected from the server.\n");
         }
+
     }
 }

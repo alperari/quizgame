@@ -1,6 +1,0 @@
-*.Debug/
-
-../../Client/Client/bin/Debug/net6.0-windows/Client.dll
-../../Client/Client/bin/Debug/net6.0-windows/Client.pdb
-../../Client/Client/obj/Debug/net6.0-windows/Client.dll
-../../Client/Client/obj/Debug/net6.0-windows/Client.pdb

@@ -41,27 +41,7 @@ namespace server
         bool listening = false;
         string serverIP;
 
-        public void RegisterName(Socket thisClient, string name)
-        {
-            bool isNameRegistered = names.Contains(name);
-            if (isNameRegistered)
-            {
-                string message = "INVALID-NAME";
-                Byte[] buffer = Encoding.UTF8.GetBytes(message);
-                logs.AppendText(name + " is already taken.\n");
-                thisClient.Send(buffer);
-            }
-            else
-            {
-                string message = "VALID-NAME";
-                Byte[] buffer = Encoding.UTF8.GetBytes(message);
-
-                thisClient.Send(buffer);
-                logs.AppendText(name + " is successfully registered.\n");
-
-                names.Add(name);
-            }
-        }
+   
 
         public void sendMessageToClient(Client thisClient, string message) // takes socket and message then sends the message to that socket
         {
@@ -76,47 +56,13 @@ namespace server
             thisClient.socket.Receive(buffer);
 
             string incomingMessage = Encoding.UTF8.GetString(buffer);
+            
+            incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+
             incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
             return incomingMessage;
         }
-
-        //public bool checkAuthorization(Socket thisClient, ref string thisClientName)
-        //{
-        //    Byte[] buffer = new Byte[1000];
-        //    thisClient.Receive(buffer);
-        //    string incomingMessage = Encoding.UTF8.GetString(buffer);
-
-        //    logs.AppendText("Client: " + incomingMessage + "\n");
-
-        //    string[] parsedIncomingMessage = incomingMessage.Split(':');
-        //    string clientOperation = parsedIncomingMessage[0];
-        //    string clientName = parsedIncomingMessage[1];
-
-        //    if(clientOperation == "registerName")
-        //    {
-        //        if (!names.Contains(clientName))
-        //        {
-        //            logs.AppendText($"A client is connected with name: {clientName} \n");
-        //            sendMessageToClient(thisClient, "Successfully registered.\n");
-        //            names.Add(clientName);
-        //            clientSockets.Add(thisClient);
-        //            thisClientName = clientName;
-
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            //this name is already taken, warn the client and close its connection!
-        //            logs.AppendText("A client tried to connect with an already used name: " + clientName + ". Closed its connection.\n");
-        //            sendMessageToClient(thisClient, "This name is already taken. Please try again.\n");
-        //            thisClient.Close();
-        //            return false;
-        //        }
-        //    }
-        //    return false;
-
-        //}
 
 
         private void ThreadAcceptFunction()
@@ -170,12 +116,13 @@ namespace server
                     if (!names.Contains(name))
                     {
                         logs.AppendText(name + " is connected.\n");
-                        sendMessageToClient(thisClient, "invalidConnection");
-                        logs.AppendText("message sent!\n");
+
                         string message = "validConnection";
                         Byte[] buffer = new Byte[1000];
                         buffer = Encoding.UTF8.GetBytes(message);
-                        thisClient.socket.Send(buffer);
+
+                        sendMessageToClient(thisClient, message);
+
                         thisClient.name = name;
 
                         clientSockets.Add(thisClient);
@@ -191,7 +138,9 @@ namespace server
                     }
                    
 
-
+                    ///TODO: Send questions to clients and receive their answers
+                    ///
+                    ///
 
                 }
                 catch
@@ -202,8 +151,8 @@ namespace server
                         logs.AppendText(thisClient.name + " is disconnected.\n");
                     }
                     clientSockets.Remove(thisClient);
-                    //thisClient.socket.Close();
-                    //names.Remove(clientName);
+                    thisClient.socket.Close();
+                    names.Remove(thisClient.name);
                     connected = false;
                 }
             }
@@ -222,7 +171,7 @@ namespace server
             terminating = true;
             //foreach (Socket client in clientSockets)
             //{
-            //    client.Close(); 
+            //    client.Close();
             //}
             Environment.Exit(0);
         }
