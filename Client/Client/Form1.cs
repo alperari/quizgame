@@ -89,7 +89,6 @@ namespace Client
 
                     richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
 
-
                     ///TODO: Keep receiving questions and send answers
                     ///
                     ///

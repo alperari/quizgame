@@ -1,0 +1,9 @@
+Client/Client/obj/
+Client/Client/bin/
+Client/Client/App.config
+Client/.vs/
+
+Server/Server/obj/
+Server/Server/bin/
+Server/Server/App.config
+Server/.vs/
