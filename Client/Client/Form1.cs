@@ -201,5 +201,12 @@ namespace Client
             richTextBox_logs.AppendText("Disconnected from the server.\n");
         }
 
+        private void button_send_Click(object sender, EventArgs e)
+        {
+            string answer = textBox_message.Text;
+            sendMessageToServer(answer);
+            string log = "Your answer: " + answer + "\n";
+            richTextBox_logs.AppendText(log);
+        }
     }
 }

@@ -132,8 +132,8 @@ namespace server
                         names.Add(name);
                         if (names.Count == 2)
                         {
-                            Console.WriteLine("Hello");
-
+                            sendMessageToClient(thisClient, "Game is started\n");
+                            this.startGame(thisClient);
                         }
                     }
                     
@@ -167,6 +167,27 @@ namespace server
             }
         }
 
+        // TODO: Client are not waiting each other during the game
+        private void startGame(Client client)
+        {
+            while(names.Count == 2  && !terminating)
+            {
+                try
+                {
+                    foreach (string question in this.questions)
+                    {
+                        sendMessageToClient(client, question);
+                        receiveMessageFromClient(client);
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine("ao");
+                }
+                
+            }
+            
+        }
         private void readFile(string path)
         {
             int counter = 0;
@@ -210,14 +231,6 @@ namespace server
 
             string path = "../../../../questions.txt";          
             this.readFile(path);
-            foreach (string question in this.questions)
-            {
-                Console.WriteLine(question);
-            }
-            foreach (string answer in this.answers)
-            {
-                Console.WriteLine(answer);
-            }
 
             if (Int32.TryParse(textBox_port.Text, out serverPort))
             {
