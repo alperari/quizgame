@@ -15,6 +15,7 @@ namespace Client
         string port = "1111";
         int portNum = 1111;
 
+
         string name;
         bool terminating = false;
         bool connected = false;
@@ -91,7 +92,7 @@ namespace Client
 
                     ///TODO: Keep receiving questions and send answers
                     ///
-                    ///
+
                 }
                 catch
                 {

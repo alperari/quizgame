@@ -2,8 +2,10 @@ Client/Client/obj/
 Client/Client/bin/
 Client/Client/App.config
 Client/.vs/
+Client/Client/Program.cs
 
 Server/Server/obj/
 Server/Server/bin/
 Server/Server/App.config
 Server/.vs/
+Server/Server/Program.cs

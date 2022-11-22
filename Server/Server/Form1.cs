@@ -145,11 +145,7 @@ namespace server
                         thisClient.socket.Close();
                         connected = false;
                     }
-                   
 
-                    ///TODO: Send questions to clients and receive their answers
-                    ///
-                    ///
 
                 }
                 catch
