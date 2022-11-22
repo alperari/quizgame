@@ -20,3 +20,12 @@ C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\Client.
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\Client.csproj.CoreCompileInputs.cache
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\Client.exe
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Client\Client\obj\Debug\Client.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\bin\Debug\Client.exe.config
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.exe
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\bin\Debug\Client.exe
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\bin\Debug\Client.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.csprojResolveAssemblyReference.cache
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.Form1.resources
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.Properties.Resources.resources
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Client\Client\obj\Debug\Client.csproj.GenerateResource.Cache

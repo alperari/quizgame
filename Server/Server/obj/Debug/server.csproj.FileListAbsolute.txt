@@ -24,3 +24,12 @@ C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server\server\obj\Debug\server.
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server\server\obj\Debug\server.csproj.CoreCompileInputs.cache
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server\server\obj\Debug\server.exe
 C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server\server\obj\Debug\server.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\bin\Debug\server.exe.config
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.exe
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\bin\Debug\server.exe
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\bin\Debug\server.pdb
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.csprojResolveAssemblyReference.cache
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.Form1.resources
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.Properties.Resources.resources
+C:\Users\m_r_y\Desktop\CS408\TCP-IP-Client-Server-Application\Server\server\obj\Debug\server.csproj.GenerateResource.Cache

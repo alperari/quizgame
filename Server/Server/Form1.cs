@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -36,6 +37,8 @@ namespace server
         
         List<Client> clientSockets = new List<Client>();
         List<string> names = new List<string>();
+        List<string> questions = new List<string>();
+        List<string> answers = new List<string>();
 
         bool terminating = false;
         bool listening = false;
@@ -127,7 +130,13 @@ namespace server
 
                         clientSockets.Add(thisClient);
                         names.Add(name);
+                        if (names.Count == 2)
+                        {
+                            Console.WriteLine("Hello");
+
+                        }
                     }
+                    
                     else
                     {
                         logs.AppendText(name + " tried to do invalid connection.\n");
@@ -158,6 +167,25 @@ namespace server
             }
         }
 
+        private void readFile(string path)
+        {
+            int counter = 0;
+
+            // Read the file and display it line by line.  
+            foreach (string line in System.IO.File.ReadLines(path))
+            {
+                if (counter%2 == 0)
+                {
+                    this.questions.Add(line);
+                }
+                else
+                {
+                    this.answers.Add(line);
+                }
+                counter++;
+            }
+        }
+
 
         public Form1()
         {
@@ -180,7 +208,18 @@ namespace server
         {
             int serverPort;
 
-            if(Int32.TryParse(textBox_port.Text, out serverPort))
+            string path = "../../../../questions.txt";          
+            this.readFile(path);
+            foreach (string question in this.questions)
+            {
+                Console.WriteLine(question);
+            }
+            foreach (string answer in this.answers)
+            {
+                Console.WriteLine(answer);
+            }
+
+            if (Int32.TryParse(textBox_port.Text, out serverPort))
             {
                 IPEndPoint endPoint = new IPEndPoint(IPAddress.Any, serverPort);
                 serverIP = endPoint.Address.ToString();
