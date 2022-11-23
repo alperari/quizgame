@@ -22,11 +22,13 @@ namespace server
     {
         public Socket socket;
         public string name;
+        public double score;
 
         public Client(Socket s, string n)
         {
             socket = s;
             name = n;
+            score = 0;
         }
     }
 
@@ -40,11 +42,13 @@ namespace server
         List<string> questions = new List<string>();
         List<string> answers = new List<string>();
 
+
         bool terminating = false;
         bool listening = false;
         string serverIP;
 
-   
+        static Barrier barrier = new Barrier(2, x => { });
+
 
         public void sendMessageToClient(Client thisClient, string message) // takes socket and message then sends the message to that socket
         {
@@ -75,13 +79,48 @@ namespace server
                 try
                 {
                     Client newClient = new Client(serverSocket.Accept(), "");
-                    
+
                     // Do not add this client into list before making sure it has unique name
                     //clientSockets.Add(newClient);
 
-                    Thread receiveThread = new Thread(() => ThreadReceiveFunction(newClient)); // updated
-                    receiveThread.Start();
-                    //}
+                    //Receive registerName:<name> for the first time
+                    string incomingMessage = receiveMessageFromClient(newClient);
+                    logs.AppendText("Client: " + incomingMessage + "\n");
+
+                    string[] parsedIncomingMessage = incomingMessage.Split(':');
+                    string command = parsedIncomingMessage[0];
+                    string name = parsedIncomingMessage[1];
+
+                    if (command == "registerName")
+                    {
+                        if (!names.Contains(name))
+                        {
+                            logs.AppendText(name + " is connected.\n");
+
+                            string message = "validConnection";
+                            Byte[] buffer = new Byte[1000];
+                            buffer = Encoding.UTF8.GetBytes(message);
+
+                            sendMessageToClient(newClient, message);
+
+                            newClient.name = name;
+                            clientSockets.Add(newClient);
+                            names.Add(name);
+
+                            Thread receiveThread = new Thread(() => ThreadReceiveFunction(newClient));
+                            receiveThread.Start();
+
+                        }
+
+                        else
+                        {
+                            logs.AppendText(name + " tried to do invalid connection.\n");
+
+                            sendMessageToClient(newClient, "invalidConnection");
+                            newClient.socket.Close();
+                            //connected = false;
+                        }
+                    }
 
                 }
                 catch
@@ -107,45 +146,30 @@ namespace server
             {
                 try
                 {
-
-                    //Receive registerName:<name> for the first time
-                    string registerMessage= receiveMessageFromClient(thisClient);
-                    logs.AppendText("Client: " + registerMessage + "\n");
-
-                    string[] parsedIncomingMessage = registerMessage.Split(':');
-                    string command = parsedIncomingMessage[0];
-                    string name = parsedIncomingMessage[1];
-
-                    if (!names.Contains(name))
+                    if(names.Count == 2)
                     {
-                        logs.AppendText(name + " is connected.\n");
+                        sendMessageToClient(thisClient, "Game is started\n");
 
-                        string message = "validConnection";
-                        Byte[] buffer = new Byte[1000];
-                        buffer = Encoding.UTF8.GetBytes(message);
 
-                        sendMessageToClient(thisClient, message);
-
-                        thisClient.name = name;
-
-                        clientSockets.Add(thisClient);
-                        names.Add(name);
-                        if (names.Count == 2)
+                        foreach (string question in this.questions)
                         {
-                            sendMessageToClient(thisClient, "Game is started\n");
-                            this.startGame(thisClient);
+                            sendMessageToClient(thisClient, question);
+
+
+                            string incomingMessage = receiveMessageFromClient(thisClient);
+
+                            logs.AppendText("Client: " + incomingMessage + "\n");
+
+                            string[] parsedIncomingMessage = incomingMessage.Split(':');
+                            string command = parsedIncomingMessage[0];
+                            string name = parsedIncomingMessage[1];
+                            
+                            ///TODO: Process incoming message and scores
+
+                            barrier.SignalAndWait();
+
                         }
                     }
-                    
-                    else
-                    {
-                        logs.AppendText(name + " tried to do invalid connection.\n");
-
-                        sendMessageToClient(thisClient, "invalidConnection");
-                        thisClient.socket.Close();
-                        connected = false;
-                    }
-
 
                 }
                 catch
@@ -157,33 +181,36 @@ namespace server
                     }
                     clientSockets.Remove(thisClient);
                     thisClient.socket.Close();
+
+                    clientSockets.Remove((Client)thisClient);
                     names.Remove(thisClient.name);
+
                     connected = false;
                 }
             }
         }
 
         // TODO: Client are not waiting each other during the game
-        private void startGame(Client client)
-        {
-            while(names.Count == 2  && !terminating)
-            {
-                try
-                {
-                    foreach (string question in this.questions)
-                    {
-                        sendMessageToClient(client, question);
-                        receiveMessageFromClient(client);
-                    }
-                }
-                catch
-                {
-                    Console.WriteLine("ao");
-                }
+        //private void startGame(Client client)
+        //{
+        //    while(names.Count == 2  && !terminating)
+        //    {
+        //        try
+        //        {
+        //            foreach (string question in this.questions)
+        //            {
+        //                sendMessageToClient(client, question);
+        //                receiveMessageFromClient(client);
+        //            }
+        //        }
+        //        catch
+        //        {
+        //            Console.WriteLine("ao");
+        //        }
                 
-            }
+        //    }
             
-        }
+        //}
         private void readFile(string path)
         {
             int counter = 0;
@@ -214,10 +241,10 @@ namespace server
         {
             listening = false;
             terminating = true;
-            //foreach (Socket client in clientSockets)
-            //{
-            //    client.Close();
-            //}
+            foreach (Client client in clientSockets)
+            {
+                client.socket.Close();
+            }
             Environment.Exit(0);
         }
 
