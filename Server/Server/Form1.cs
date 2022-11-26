@@ -45,6 +45,7 @@ namespace server
 
         bool terminating = false;
         bool listening = false;
+        bool isGameStarted = false;
         string serverIP;
 
         static Barrier barrier = new Barrier(2, x => { });
@@ -148,6 +149,10 @@ namespace server
                 {
                     if(names.Count == 2)
                     {
+                        lock (this)
+                        {
+                            isGameStarted = true;
+                        }
                         sendMessageToClient(thisClient, "Game is started\n");
 
 
@@ -174,16 +179,29 @@ namespace server
                 }
                 catch
                 {
+                    clientSockets.Remove(thisClient);
+                    thisClient.socket.Close();
+                    names.Remove(thisClient.name);
+                    connected = false;
                     if (!terminating)
                     {
                         // That means, the client disconnected itself
                         logs.AppendText(thisClient.name + " is disconnected.\n");
-                    }
-                    clientSockets.Remove(thisClient);
-                    thisClient.socket.Close();
-                    names.Remove(thisClient.name);
 
-                    connected = false;
+                        // If one of the clients left during the game. Other client is the winner automatically.
+                        if (isGameStarted)
+                        {
+                            foreach (Client client in clientSockets)
+                            {
+                                String message = thisClient.name + " is left. Your are the winner";
+                                sendMessageToClient(client, message);
+
+                                logs.AppendText("Game is over");
+                                sendMessageToClient(client, "Game is over.");
+        
+                            }
+                        }
+                    }
                 }
             }
         }
