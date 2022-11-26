@@ -181,8 +181,6 @@ namespace server
                     }
                     clientSockets.Remove(thisClient);
                     thisClient.socket.Close();
-
-                    clientSockets.Remove((Client)thisClient);
                     names.Remove(thisClient.name);
 
                     connected = false;
@@ -241,10 +239,6 @@ namespace server
         {
             listening = false;
             terminating = true;
-            foreach (Client client in clientSockets)
-            {
-                client.socket.Close();
-            }
             Environment.Exit(0);
         }
 
