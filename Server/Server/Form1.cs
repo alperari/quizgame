@@ -15,10 +15,9 @@ using System.Diagnostics;
 
 
 
-
 namespace server
 {
-    public struct Client
+    public class Client
     {
         public Socket socket;
         public string name;
@@ -30,7 +29,6 @@ namespace server
             name = n;
             score = 0;
         }
-
     }
 
     public partial class Form1 : Form
@@ -41,7 +39,9 @@ namespace server
         List<Client> clientSockets = new List<Client>();
         List<string> names = new List<string>();
         List<string> questions = new List<string>();
-        List<string> answers = new List<string>();
+        List<string> answersReal = new List<string>();
+
+        List<(Client, int)> clientAnswers = new List<(Client, int)>();
 
         int currentClosest = Int16.MaxValue;
         string currentClosestName = "";
@@ -50,8 +50,12 @@ namespace server
         bool terminating = false;
         bool listening = false;
         bool isGameStarted = false;
-        bool isSameAnswer = false;
         string serverIP;
+
+        bool alreadyCalculated = false;
+        string roundStatus = "NONE";
+        string winnerName = "NONE";
+
 
         static Barrier barrier = new Barrier(2, x => { });
 
@@ -159,13 +163,13 @@ namespace server
                         {
                             isGameStarted = true;
                         }
-                        sendMessageToClient(thisClient, "Game is started\n");
+                        sendMessageToClient(thisClient, "Game is started.\n");
 
 
                         for (int i=0; i< questions.Capacity; i++)
                         {
                             string question = questions[i];
-                            string realAnswer = answers[i];
+                            int realAnswer = Int16.Parse(answersReal[i]);
                             sendMessageToClient(thisClient, question);
 
 
@@ -174,27 +178,62 @@ namespace server
                             logs.AppendText("Client: " + incomingMessage + "\n");
 
                             string[] parsedIncomingMessage = incomingMessage.Split(':');
+
                             string command = parsedIncomingMessage[0];
                             string name = parsedIncomingMessage[1];
-                            string clientAnswer = parsedIncomingMessage[2];
-                            Console.WriteLine("a");
-                            calculateScore(thisClient.name,clientAnswer, realAnswer);
-                            Console.WriteLine("a");
-                            ///TODO: Process incoming message and scores
+                            int clientAnswer = Int16.Parse(parsedIncomingMessage[2]);
+
+
+
+                            // We will store clients and their answers each round as List<Tuple>
+                            (Client, int) clientAnswerTuple = (thisClient, clientAnswer);
+
+
+                            lock (this)
+                            {
+                                clientAnswers.Add(clientAnswerTuple);
+                            }
+
+
+                            // Both players will wait each other here
+                            // Due to barrier
                             barrier.SignalAndWait();
 
-                            if (isSameAnswer) {
-                                thisClient.score += 0.5;
-                            }
-                            else
-                            {
-                                if (thisClient.name == currentClosestName)
-                                {
-                                    thisClient.score += 1;
-                                }
-                            }
-                            Console.Write(thisClient.score);
+                            // Now you can compare their answers
+                            // (barrier guarantees both gave their answers)
+                            // And calculate their scores
 
+
+
+                            lock (this)
+                            {
+                                // This lock makes sure that only one thread will perform score calculation
+                                // PLUS: it will decide if the game is TIE or there is a winner (ref roundStatus, ref winnerName)
+                                if(!alreadyCalculated)
+                                    calculateScores(realAnswer, ref roundStatus, ref winnerName);
+                                alreadyCalculated = true;
+                            }
+
+                            barrier.SignalAndWait();
+
+
+                            // Send scores to all clients, in descending order
+                            sendRoundResults(thisClient, realAnswer, roundStatus, winnerName);
+                            sendScores(thisClient);
+
+
+                            barrier.SignalAndWait();
+
+
+                            // After each round, make sure you revert things properly
+                            // So that new calculations are done correctly in the next round
+                            lock (this)
+                            {
+                                alreadyCalculated = false;
+                                roundStatus = "NONE";
+                                winnerName = "NONE";
+                                clientAnswers.Clear();
+                            }
 
                         }
                     }
@@ -209,17 +248,17 @@ namespace server
                     if (!terminating)
                     {
                         // That means, the client disconnected itself
-                        logs.AppendText(thisClient.name + " is disconnected.\n");
+                        logs.AppendText(thisClient.name + " is disconnected.");
 
                         // If one of the clients left during the game. Other client is the winner automatically.
                         if (isGameStarted)
                         {
                             foreach (Client client in clientSockets)
                             {
-                                String message = thisClient.name + " is left. Your are the winner";
+                                String message = thisClient.name + " is left. Your are the winner.";
                                 sendMessageToClient(client, message);
 
-                                logs.AppendText("Game is over");
+                                logs.AppendText("Game is over.");
                                 sendMessageToClient(client, "Game is over.");
         
                             }
@@ -251,23 +290,100 @@ namespace server
         //    }
 
         //}
-        public void calculateScore(String clientName,String clientAnswer, String realAnswer)
+
+        public void calculateScores(int realAnswer, ref string roundStatus, ref string winnerName)
         {
-            int intClientAnswer = Int16.Parse(clientAnswer);
-            int intRealAnswer = Int16.Parse(realAnswer);
-            lock (this)
+            bool isSameAnswer = true;
+
+            // Check if all of answers are the same
+            for(int i=0; i<clientAnswers.Count-1; i++)
             {
-                if (Math.Abs(intClientAnswer - intRealAnswer) < currentClosest)
+                if(clientAnswers[i].Item2 != clientAnswers[i + 1].Item2)
                 {
-                    currentClosest = intClientAnswer;
-                    currentClosestName = clientName;
-                }
-                else if (Math.Abs(intClientAnswer - intRealAnswer) == currentClosest)
-                {
-                    isSameAnswer = true;
+                    isSameAnswer = false;
                 }
             }
+
+
+            //Debug.Write(closestClient.name, closestClient.score.ToString());
+            if (isSameAnswer)
+            {
+                for(int i=0; i<clientSockets.Count; i++)
+                {
+                    clientSockets[i].score += 0.5;
+                }
+                roundStatus = "TIE";
+                return;
+            }
+            else
+            {
+                // Find the client with closest answer
+
+                String closestClientName = "";
+                int closestAnswer = int.MaxValue;
+
+
+                foreach ((Client, int) clientAnswer in clientAnswers)
+                {
+                    if (Math.Abs(clientAnswer.Item2 - realAnswer) < Math.Abs(closestAnswer - realAnswer))
+                    {
+                        closestAnswer = clientAnswer.Item2;
+                        closestClientName = clientAnswer.Item1.name;
+                    }
+                }
+                // Update that client's score
+                for (int i = 0; i < clientSockets.Count; i++)
+                {
+                    if (clientSockets[i].name == closestClientName)
+                    {
+                        clientSockets[i].score += 1;
+                        break;
+                    }
+                }
+                winnerName = closestClientName;
+                return;
+            }
         }
+
+        public void sendScores(Client thisClient)
+        {
+            //List<Client> clientSocketsOrdered = newList
+            List<Client> clientSocketsOrdered = clientSockets.OrderByDescending(element => element.score).ToList();
+
+            string message = "\nScores:\n";
+            foreach (Client client in clientSocketsOrdered)
+            {
+                message += client.name + ": " + client.score.ToString() + "\n";
+            }
+            Byte[] buffer = Encoding.UTF8.GetBytes(message);
+            thisClient.socket.Send(buffer);
+        }
+
+        public void sendRoundResults(Client thisClient, int realAnswer, string roundStatus, string winnerName)
+        {
+            if(roundStatus == "TIE")
+            {
+                string message = "Correct answer was: " + realAnswer.ToString() + ".";
+                string message2 = "It is tie. Each player earned 0.5 point(s).\n";
+                Byte[] buffer = Encoding.UTF8.GetBytes(message);
+                Byte[] buffer2 = Encoding.UTF8.GetBytes(message2);
+                thisClient.socket.Send(buffer);
+                thisClient.socket.Send(buffer2);
+
+
+            }
+            else
+            {
+                string message = "Correct answer was: " + realAnswer.ToString() + ".";
+                string message2 = "Player " + winnerName + " won this round and earned 1 point(s).\n";
+                Byte[] buffer = Encoding.UTF8.GetBytes(message);
+                Byte[] buffer2 = Encoding.UTF8.GetBytes(message2);
+                thisClient.socket.Send(buffer);
+                thisClient.socket.Send(buffer2);
+            }
+        }
+
+
         private void readFile(string path)
         {
             int counter = 0;
@@ -281,7 +397,7 @@ namespace server
                 }
                 else
                 {
-                    this.answers.Add(line);
+                    this.answersReal.Add(line);
                 }
                 counter++;
             }
