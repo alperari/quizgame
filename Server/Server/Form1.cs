@@ -30,6 +30,7 @@ namespace server
             name = n;
             score = 0;
         }
+
     }
 
     public partial class Form1 : Form
@@ -42,10 +43,14 @@ namespace server
         List<string> questions = new List<string>();
         List<string> answers = new List<string>();
 
+        int currentClosest = Int16.MaxValue;
+        string currentClosestName = "";
+
 
         bool terminating = false;
         bool listening = false;
         bool isGameStarted = false;
+        bool isSameAnswer = false;
         string serverIP;
 
         static Barrier barrier = new Barrier(2, x => { });
@@ -71,6 +76,7 @@ namespace server
 
             return incomingMessage;
         }
+
 
 
         private void ThreadAcceptFunction()
@@ -156,8 +162,10 @@ namespace server
                         sendMessageToClient(thisClient, "Game is started\n");
 
 
-                        foreach (string question in this.questions)
+                        for (int i=0; i< questions.Capacity; i++)
                         {
+                            string question = questions[i];
+                            string realAnswer = answers[i];
                             sendMessageToClient(thisClient, question);
 
 
@@ -168,10 +176,25 @@ namespace server
                             string[] parsedIncomingMessage = incomingMessage.Split(':');
                             string command = parsedIncomingMessage[0];
                             string name = parsedIncomingMessage[1];
-                            
+                            string clientAnswer = parsedIncomingMessage[2];
+                            Console.WriteLine("a");
+                            calculateScore(thisClient.name,clientAnswer, realAnswer);
+                            Console.WriteLine("a");
                             ///TODO: Process incoming message and scores
-
                             barrier.SignalAndWait();
+
+                            if (isSameAnswer) {
+                                thisClient.score += 0.5;
+                            }
+                            else
+                            {
+                                if (thisClient.name == currentClosestName)
+                                {
+                                    thisClient.score += 1;
+                                }
+                            }
+                            Console.Write(thisClient.score);
+
 
                         }
                     }
@@ -202,6 +225,7 @@ namespace server
                             }
                         }
                     }
+                
                 }
             }
         }
@@ -223,10 +247,27 @@ namespace server
         //        {
         //            Console.WriteLine("ao");
         //        }
-                
+
         //    }
-            
+
         //}
+        public void calculateScore(String clientName,String clientAnswer, String realAnswer)
+        {
+            int intClientAnswer = Int16.Parse(clientAnswer);
+            int intRealAnswer = Int16.Parse(realAnswer);
+            lock (this)
+            {
+                if (Math.Abs(intClientAnswer - intRealAnswer) < currentClosest)
+                {
+                    currentClosest = intClientAnswer;
+                    currentClosestName = clientName;
+                }
+                else if (Math.Abs(intClientAnswer - intRealAnswer) == currentClosest)
+                {
+                    isSameAnswer = true;
+                }
+            }
+        }
         private void readFile(string path)
         {
             int counter = 0;
