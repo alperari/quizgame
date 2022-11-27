@@ -43,10 +43,6 @@ namespace server
       
         List<Tuple<Client, int>> clientAnswers = new List<Tuple<Client, int>>();
 
-        int currentClosest = Int16.MaxValue;
-        string currentClosestName = "";
-
-
         bool terminating = false;
         bool listening = false;
         bool isGameStarted = false;
@@ -253,6 +249,9 @@ namespace server
                         // If one of the clients left during the game. Other client is the winner automatically.
                         if (isGameStarted)
                         {
+                            clientAnswers = new List<Tuple<Client, int>>();
+                            names = new List<string>();
+
                             foreach (Client client in clientSockets)
                             {
                                 String message = thisClient.name + " is left. Your are the winner.";
@@ -260,8 +259,10 @@ namespace server
 
                                 logs.AppendText("Game is over.");
                                 sendMessageToClient(client, "Game is over.");
+                                client.socket.Close();
         
                             }
+                            clientSockets = new List<Client>();
                         }
                     }
                 
@@ -322,18 +323,14 @@ namespace server
                 String closestClientName = "";
                 int closestAnswer = int.MaxValue;
 
-                Console.WriteLine("a");
                 for (int i=0; i<clientAnswers.Count; i++)
                 {
-                    Console.WriteLine("b");
                     Tuple<Client, int> clientAnswer = clientAnswers[i];
-                    Console.WriteLine("c");
                     if (Math.Abs(clientAnswer.Item2 - realAnswer) < Math.Abs(closestAnswer - realAnswer))
                     {
                         closestAnswer = clientAnswer.Item2;
                         closestClientName = clientAnswer.Item1.name;
                     }
-                    Console.WriteLine("d");
                 }
                 // Update that client's score
                 for (int i = 0; i < clientSockets.Count; i++)
@@ -344,7 +341,6 @@ namespace server
                         break;
                     }
                 }
-                Console.WriteLine("g");
                 winnerName = closestClientName;
                 return;
             }

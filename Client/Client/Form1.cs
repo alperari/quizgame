@@ -87,6 +87,15 @@ namespace Client
                 try
                 {
                     string messageReceived = receiveMessageFromServer();
+                    Console.WriteLine(messageReceived);
+                    if (messageReceived == "Game is over.")
+                    {
+                        // If game is over, we need to throw exception to activate the catch part
+                        richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
+                        connected = false;
+                        terminating = true;
+                        throw new System.Net.Sockets.SocketException();
+                    }
 
                     richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
 
@@ -109,6 +118,18 @@ namespace Client
                         richTextBox_logs.AppendText("Server shut down.\n");
 
                     }
+                    else
+                    {
+                        //this means that game is over
+                        button_connect.Enabled = true;
+                        button_disconnect.Enabled = false;
+                        button_send.Enabled = false;
+                        textBox_message.Enabled = false;
+                        textBox_name.Enabled = true;
+                        textBox_ip.Enabled = true;
+                        textBox_port.Enabled = true;
+                    }
+
                     connected = false;
                     clientSocket.Close();
                 }
