@@ -40,8 +40,8 @@ namespace server
         List<string> names = new List<string>();
         List<string> questions = new List<string>();
         List<string> answersReal = new List<string>();
-
-        List<(Client, int)> clientAnswers = new List<(Client, int)>();
+      
+        List<Tuple<Client, int>> clientAnswers = new List<Tuple<Client, int>>();
 
         int currentClosest = Int16.MaxValue;
         string currentClosestName = "";
@@ -186,12 +186,14 @@ namespace server
 
 
                             // We will store clients and their answers each round as List<Tuple>
-                            (Client, int) clientAnswerTuple = (thisClient, clientAnswer);
+                            Tuple<Client, int> clientAnswerTuple = Tuple.Create(thisClient, clientAnswer);
 
 
                             lock (this)
                             {
+
                                 clientAnswers.Add(clientAnswerTuple);
+ 
                             }
 
 
@@ -209,18 +211,16 @@ namespace server
                             {
                                 // This lock makes sure that only one thread will perform score calculation
                                 // PLUS: it will decide if the game is TIE or there is a winner (ref roundStatus, ref winnerName)
-                                if(!alreadyCalculated)
+                                if (!alreadyCalculated)
                                     calculateScores(realAnswer, ref roundStatus, ref winnerName);
                                 alreadyCalculated = true;
                             }
 
                             barrier.SignalAndWait();
 
-
                             // Send scores to all clients, in descending order
                             sendRoundResults(thisClient, realAnswer, roundStatus, winnerName);
                             sendScores(thisClient);
-
 
                             barrier.SignalAndWait();
 
@@ -322,14 +322,18 @@ namespace server
                 String closestClientName = "";
                 int closestAnswer = int.MaxValue;
 
-
-                foreach ((Client, int) clientAnswer in clientAnswers)
+                Console.WriteLine("a");
+                for (int i=0; i<clientAnswers.Count; i++)
                 {
+                    Console.WriteLine("b");
+                    Tuple<Client, int> clientAnswer = clientAnswers[i];
+                    Console.WriteLine("c");
                     if (Math.Abs(clientAnswer.Item2 - realAnswer) < Math.Abs(closestAnswer - realAnswer))
                     {
                         closestAnswer = clientAnswer.Item2;
                         closestClientName = clientAnswer.Item1.name;
                     }
+                    Console.WriteLine("d");
                 }
                 // Update that client's score
                 for (int i = 0; i < clientSockets.Count; i++)
@@ -340,6 +344,7 @@ namespace server
                         break;
                     }
                 }
+                Console.WriteLine("g");
                 winnerName = closestClientName;
                 return;
             }
