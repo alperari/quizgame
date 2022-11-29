@@ -39,6 +39,14 @@ namespace Client
             string incomingMessage = Encoding.UTF8.GetString(buffer);
             incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
 
+            if (incomingMessage == "")
+            {
+                clientSocket.Close();
+                connected = false;
+                terminating = true;
+                throw new System.Net.Sockets.SocketException();
+            }
+
             return incomingMessage;
         }
 
@@ -92,6 +100,7 @@ namespace Client
                     {
                         // If game is over, we need to throw exception to activate the catch part
                         richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
+                        Console.WriteLine("asdsfa");
                         connected = false;
                         terminating = true;
                         throw new System.Net.Sockets.SocketException();
