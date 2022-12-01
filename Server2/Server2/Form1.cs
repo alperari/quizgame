@@ -163,7 +163,6 @@ namespace Server2
 
             while (connected && !terminating)
             {
-
                 try
                 {
                     if (names.Count == 2)
