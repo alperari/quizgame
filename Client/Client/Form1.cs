@@ -20,8 +20,6 @@ namespace Client
         bool terminating = false;
         bool connected = false;
 
-        bool isNameRegistered = false;
-
         Socket clientSocket;
 
 
@@ -54,8 +52,6 @@ namespace Client
         {
             connected = false;
             terminating = true;
-
-            isNameRegistered = false;
 
             button_connect.Enabled = true;
             button_disconnect.Enabled = false;
@@ -95,12 +91,12 @@ namespace Client
                 try
                 {
                     string messageReceived = receiveMessageFromServer();
-                    Console.WriteLine(messageReceived);
-                    if (messageReceived == "Game is over.")
+                    if (messageReceived.Contains("Game is over"))
                     {
                         // If game is over, we need to throw exception to activate the catch part
                         richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
-                        Console.WriteLine("asdsfa");
+                        richTextBox_logs.AppendText("Disconnected from the server.\n");
+
                         connected = false;
                         terminating = true;
                         throw new System.Net.Sockets.SocketException();
@@ -185,11 +181,20 @@ namespace Client
                         sendMessageToServer(registerMessage);
 
                         string registerResponse = receiveMessageFromServer();
-                        Debug.WriteLine(registerResponse);
 
-                        if (registerResponse == "invalidConnection")
+                        if (registerResponse == "invalidConnection:nameTaken")
                         {
                             richTextBox_logs.AppendText("This name is already taken. Please try again.\n");
+                            clientSocket.Close();
+                            onDisconnectRevertButtons();
+                            // Don't do clientSocket.Close()!
+                            // Server has done that automatically
+
+                        }
+                        if (registerResponse == "invalidConnection:gameFull")
+                        {
+                            richTextBox_logs.AppendText("Game is already full. You can't enter.\n");
+                            clientSocket.Close();
                             onDisconnectRevertButtons();
                             // Don't do clientSocket.Close()!
                             // Server has done that automatically

@@ -1,0 +1,11 @@
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\bin\Debug\Server2.exe.config
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\bin\Debug\Server2.exe
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\bin\Debug\Server2.pdb
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.csproj.AssemblyReference.cache
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.csproj.SuggestedBindingRedirects.cache
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.Properties.Resources.resources
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.csproj.GenerateResource.cache
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.csproj.CoreCompileInputs.cache
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.exe
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.pdb
+C:\Users\alper\source\repos\CS408-SimpleQuizGame\Server2\Server2\obj\Debug\Server2.Form1.resources
