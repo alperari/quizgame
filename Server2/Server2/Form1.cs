@@ -344,6 +344,8 @@ namespace Server2
                                 foreach (Client client in clientSockets)
                                 {
                                     String message = thisClient.name + " is left. Your are the winner. Game is over.\n";
+                                    logs.AppendText("Game is over. " + client.name + " is the winner.\n");
+
                                     sendMessageToClient(client, message);
 
 
@@ -353,14 +355,7 @@ namespace Server2
                                 clientSockets = new List<Client>();
                                 isGameStarted = false;
                             }
-                            if (clientSockets.Count == 0)
-                            {
-                                if (!isGameOverPrinted)
-                                {
-                                    isGameOverPrinted = true;
-                                    logs.AppendText("Game is over. " + thisClient.name + " lost the game due to connection loss.\n");
-                                }
-                            }
+                            
                         }
                     }
 
