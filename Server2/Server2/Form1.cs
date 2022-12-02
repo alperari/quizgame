@@ -142,16 +142,14 @@ namespace Server2
                     }
 
                 }
+
                 catch
                 {
-                    if (terminating)
-                    {
-                        listening = false;
-                    }
-                    else
+                    if (!terminating)
                     {
                         logs.AppendText("The socket stopped working.\n");
                     }
+                    listening = false;
 
                 }
             }
@@ -165,6 +163,7 @@ namespace Server2
             {
                 try
                 {
+                    
                     if (names.Count == 2)
                     {
                         lock (this)
@@ -283,6 +282,12 @@ namespace Server2
                         barrier.SignalAndWait();
                         throw new System.Net.Sockets.SocketException();
                     }
+                    else
+                    {
+                        Byte[] buffer = new Byte[64];
+                        thisClient.socket.Receive(buffer);
+                    }
+                   
 
                 }
                 catch
@@ -465,7 +470,6 @@ namespace Server2
 
                 listening = true;
                 button_listen.Enabled = false;
-                button_stop.Enabled = true;
                 textBox_message.Enabled = true;
                 button_send.Enabled = true;
 
@@ -504,7 +508,6 @@ namespace Server2
                         button_send.Enabled = false;
                         textBox_port.Enabled = true;
                         button_listen.Enabled = true;
-                        button_stop.Enabled = true;
 
                         serverSocket.Close();
                     }
@@ -513,9 +516,5 @@ namespace Server2
             }
         }
 
-        private void button_stop_Click(object sender, EventArgs e)
-        {
-
-        }
     }
 }

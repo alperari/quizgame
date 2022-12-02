@@ -11,9 +11,7 @@ namespace Client
 {
     public partial class Form1 : Form
     {
-        string ip = "localhost";
-        string port = "1111";
-        int portNum = 1111;
+        
 
 
         string name;
@@ -162,6 +160,9 @@ namespace Client
                 {
                     try
                     {
+                        int portNum = Int32.Parse(textBox_port.Text);
+                        string ip = textBox_ip.Text;
+
                         clientSocket.Connect(ip, portNum);
 
                         button_connect.Enabled = false;
