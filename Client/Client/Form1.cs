@@ -18,6 +18,10 @@ namespace Client
         bool terminating = false;
         bool connected = false;
 
+        string port;
+        string ip;
+        int portNum;
+
         Socket clientSocket;
 
 
@@ -100,7 +104,11 @@ namespace Client
                         throw new System.Net.Sockets.SocketException();
                     }
 
-                    richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
+                    if (!messageReceived.Contains("waitingForPlayers"))
+                    {
+                        richTextBox_logs.AppendText("Server: " + messageReceived + "\n");
+                    }
+
 
                     ///TODO: Keep receiving questions and send answers
                     ///
@@ -146,21 +154,18 @@ namespace Client
         private void button_connect_Click(object sender, EventArgs e)
         {
             terminating = false;
-            ///TODO
-            //ip = textBox_ip.Text;
-            //port = textBox_port.Text;
+            ip = textBox_ip.Text;
+            port = textBox_port.Text;
             name = textBox_name.Text;
 
             if (name != "")
             {
                 clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
-                //if (Int32.TryParse(port, out portNum))
-                if (true)
+                if (Int32.TryParse(port, out portNum))
                 {
                     try
                     {
-                        int portNum = Int32.Parse(textBox_port.Text);
                         string ip = textBox_ip.Text;
 
                         clientSocket.Connect(ip, portNum);

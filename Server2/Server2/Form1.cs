@@ -54,6 +54,8 @@ namespace Server2
         string roundStatus = "NONE";
         string winnerName = "NONE";
 
+        bool isGameOverPrinted = false;
+        bool isQuestionPrinted = false;
 
         static Barrier barrier = new Barrier(2, x => { });
 
@@ -118,6 +120,7 @@ namespace Server2
                                 clientSockets.Add(newClient);
                                 names.Add(name);
 
+
                                 Thread receiveThread = new Thread(() => ThreadReceiveFunction(newClient));
                                 receiveThread.Start();
 
@@ -163,13 +166,20 @@ namespace Server2
             {
                 try
                 {
-                    
+                    System.Threading.Thread.Sleep(100);
+
+                    sendMessageToClient((Client)thisClient, "waitingForPlayers");
                     if (names.Count == 2)
                     {
                         lock (this)
                         {
-                            isGameStarted = true;
-
+                            if (!isGameStarted)
+                            {
+                                isGameStarted = true;
+                                isGameOverPrinted = false;
+                                logs.AppendText("Game started.\n");
+                            }
+                            
                         }
 
                         sendMessageToClient(thisClient, "Game is started. There will be " + numberOfQuestions + " questions.\n");
@@ -185,6 +195,17 @@ namespace Server2
                             string question = questions[currentQuestionNo];
                             int realAnswer = Int16.Parse(answersReal[currentQuestionNo]);
                             sendMessageToClient(thisClient, "Question" + (i+1).ToString() + " ==> " + question);
+
+
+                            lock (this)
+                            {
+                                if (!isQuestionPrinted)
+                                {
+                                    isQuestionPrinted = true;
+                                    logs.AppendText("Question" + (i+1).ToString() + " ==> " + question+"\n");
+
+                                }
+                            }
 
 
                             string incomingMessage = receiveMessageFromClient(thisClient);
@@ -250,6 +271,7 @@ namespace Server2
                             lock (this)
                             {
                                 alreadyCalculated = false;
+                                isQuestionPrinted = false;
                                 roundStatus = "NONE";
                                 winnerName = "NONE";
                                 clientAnswers.Clear();
@@ -257,6 +279,7 @@ namespace Server2
 
                             currentQuestionNo++;
                         }
+
                         foreach (Client client in clientSockets)
                         {
                             if (thisClient != client)
@@ -264,6 +287,10 @@ namespace Server2
                                 if (thisClient.score > client.score)
                                 {
                                     sendMessageToClient(thisClient, "You are the winner. Game is over\n");
+                                    logs.AppendText("Game is over. " + thisClient.name + " is the winner.\n");
+                                    isGameOverPrinted = true;
+
+
                                 }
                                 else if (thisClient.score < client.score)
                                 {
@@ -272,6 +299,16 @@ namespace Server2
                                 else
                                 {
                                     sendMessageToClient(thisClient, "It is tie. Game is over\n");
+
+                                    lock (this)
+                                    {
+                                        if (!isGameOverPrinted)
+                                        {
+                                            isGameOverPrinted = true;
+                                            logs.AppendText("Game is over. It is tie.\n");
+
+                                        }
+                                    }
                                 }
 
                             }
@@ -282,45 +319,48 @@ namespace Server2
                         barrier.SignalAndWait();
                         throw new System.Net.Sockets.SocketException();
                     }
-                    else
-                    {
-                        Byte[] buffer = new Byte[64];
-                        thisClient.socket.Receive(buffer);
-                    }
-                   
+                    
 
                 }
                 catch
                 {
-                    clientSockets.Remove(thisClient);
-                    thisClient.socket.Close();
-                    names.Remove(thisClient.name);
-                    connected = false;
-                    if (!terminating)
+                    lock (this)
                     {
-                        // That means, the client disconnected itself
-                        logs.AppendText(thisClient.name + " is disconnected.\n");
-
-                        // If one of the clients left during the game. Other client is the winner automatically.
-                        if (isGameStarted)
+                        clientSockets.Remove(thisClient);
+                        thisClient.socket.Close();
+                        names.Remove(thisClient.name);
+                        connected = false;
+                        if (!terminating)
                         {
-                            clientAnswers = new List<Tuple<Client, int>>();
-                            names = new List<string>();
+                            // That means, the client disconnected itself
+                            logs.AppendText(thisClient.name + " is disconnected.\n");
 
-                            foreach (Client client in clientSockets)
+                            // If one of the clients left during the game. Other client is the winner automatically.
+                            if (isGameStarted)
                             {
-                                String message = thisClient.name + " is left. Your are the winner. Game is over.\n";
-                                sendMessageToClient(client, message);
+                                clientAnswers = new List<Tuple<Client, int>>();
+                                names = new List<string>();
+
+                                foreach (Client client in clientSockets)
+                                {
+                                    String message = thisClient.name + " is left. Your are the winner. Game is over.\n";
+                                    sendMessageToClient(client, message);
 
 
+                                }
+
+
+                                clientSockets = new List<Client>();
+                                isGameStarted = false;
                             }
                             if (clientSockets.Count == 0)
                             {
-                                logs.AppendText("Game is over.\n");
+                                if (!isGameOverPrinted)
+                                {
+                                    isGameOverPrinted = true;
+                                    logs.AppendText("Game is over. " + thisClient.name + " lost the game due to connection loss.\n");
+                                }
                             }
-
-                            clientSockets = new List<Client>();
-                            isGameStarted = false;
                         }
                     }
 
