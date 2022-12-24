@@ -39,7 +39,7 @@ namespace Server2
         List<Client> playerSockets = new List<Client>();
 
         List<string> names = new List<string>();
-        
+      
 
         List<string> questions = new List<string>();
         List<string> answersReal = new List<string>();
@@ -138,6 +138,8 @@ namespace Server2
                                         names.Add(name);
                                         
 
+
+
                                     }
                                     else
                                     {
@@ -151,18 +153,25 @@ namespace Server2
 
 
                                 Thread receiveThread = new Thread(() => ThreadReceiveFunction(newClient));
-                                while (isGameStarted) { }
-                                barrier.AddParticipant();
+                                
+                                //while (isGameStarted) {}
+                                
                                 receiveThread.Start();
-                                
-                                
 
-                            }
+                            
 
+
+
+                        }
                         else
                         {
                             logs.AppendText(name + " tried to make an invalid connection with a taken name.\n");
-
+                            /*for(int i = 0; i< names.Count;i++)
+                            {
+                                logs.AppendText(names[i] + " ");
+                            }
+                            logs.AppendText("\n");*/
+                            
                             sendMessageToClient(newClient, "invalidConnection:nameTaken");
                             newClient.socket.Close();
                             //connected = false;
@@ -184,12 +193,16 @@ namespace Server2
                 }
             }
         }
-
+        
         
         private void ThreadReceiveFunction(Client thisClient) // updated
         {
             bool connected = true;
-
+            for (int i = 0; i < names.Count; i++)
+            {
+                logs.AppendText(names[i] + " ");
+            }
+            logs.AppendText("\n");
             while (connected && !terminating)
             {
                 try
@@ -200,23 +213,24 @@ namespace Server2
                     bool playing_game = false;
                     lock (this)
                     {
-                        playing_game = (playerSockets.Count >= 2) && (!start_game.Enabled);
+                        playing_game = playerSockets.Contains(thisClient) && (playerSockets.Count >= 2) && (!start_game.Enabled);
                     }
                     if (playing_game)//BARAAAAAAAAAAAAAAAAN 2. DEĞİŞİKLİK
                     {
                         lock (this)
                         {
                             oneplayer = false;
+                            barrier.AddParticipant();
                             if (!isGameStarted)
                             {
                                 isGameStarted = true;
-                                
 
+                                
                                 logs.AppendText("Game started.\n");
                             }
                             
                         }
-
+                        System.Threading.Thread.Sleep(100);
                         sendMessageToClient(thisClient, "Game is started. There will be " + numberOfQuestions + " questions.\n");
                         
                         barrier.SignalAndWait();
@@ -426,6 +440,7 @@ namespace Server2
                         */
                         lock(this)
                         {
+                            
                             if ((game_winner.Count == playerSockets.Count) && (playerSockets.Count != 1))
                             {
 
@@ -460,42 +475,69 @@ namespace Server2
                         }
                         lock(this)
                         {
-                            playerSockets.Clear();
                             
-                            for(int a = 0; a< clientSockets.Count; a++)
+                            barrier.RemoveParticipant();
+
+                            playerSockets.Clear();
+                           
+                            for(int i = 0; i < clientSockets.Count;i++)
                             {
-                                playerSockets.Add(clientSockets[a]);
+                                playerSockets.Add(clientSockets[i]);
                             }
+                            
+                            
                             clientAnswers.Clear();
                             game_winner.Clear();
                             isGameStarted = false;
                             start_game.Enabled = true;
                             win = "";
                             game_w_found = false;
+                            
+
                         }
                         
 
                     }
+                    else
+                    {
+                        /*for (int i = 0; i < names.Count; i++)
+                        {
+                            logs.AppendText(names[i] + " ");
+                        }
+                        logs.AppendText("\n");*/
+                    }
                     
-                    barrier.SignalAndWait();
-                        
-                    
-                    
+
+                   
+
 
                 }
                 catch
                 {
                     lock (this)
                     {
+                        if (playerSockets.Contains(thisClient))
+                        {
+                            barrier.RemoveParticipant();
+                            
+                        }
                         clientSockets.Remove(thisClient);
                         playerSockets.Remove(thisClient);
                         names.Remove(thisClient.name);
+                        /*for (int i = 0; i < names.Count; i++)
+                        {
+                            logs.AppendText(names[i] + " ");
+                        }
+                        logs.AppendText("\n");*/
                         thisClient.socket.Close();
-                        barrier.RemoveParticipant();
+                       
+                        
                         game_winner.Remove(thisClient);
                         winnerName.Remove(thisClient.name);
                         thisClient.score = 0;
                         connected = false;
+                    
+                    
                         if (!terminating)
                         {
                             // That means, the client disconnected itself
@@ -543,6 +585,7 @@ namespace Server2
             
             return w;
         }
+        double point = 0.0;
         public void calculateScores(int realAnswer, ref string roundStatus, ref List<string> winnerName)
         {
             bool isSameAnswer = true;
@@ -578,7 +621,11 @@ namespace Server2
                     {
                         for (int i = 0; i < playerSockets.Count; i++)
                         {
-                            playerSockets[i].score += 0.5;
+                            point = (1.0 / playerSockets.Count);
+                            point = (double)System.Math.Round(point, 2);
+
+                            playerSockets[i].score += point;
+                            
                         }
                         roundStatus = "TIE";
                     }
@@ -615,7 +662,10 @@ namespace Server2
                         {
                             if (closestClientName.Contains(playerSockets[i].name))
                             {
-                                playerSockets[i].score += 1;
+                                point = (1.0 / closestClientName.Count);
+                                point = Math.Round(point, 2);
+
+                                playerSockets[i].score += point;
 
                             }
                         }
@@ -655,7 +705,7 @@ namespace Server2
             if (roundStatus == "TIE")
             {
                 string message = "Correct answer was: " + realAnswer.ToString() + ".";
-                string message2 = "It is tie. Each player earned 0.5 point(s).\n";
+                string message2 = "It is tie. Each player earned "+ point.ToString()+ " point(s).\n";
                 Byte[] buffer = Encoding.UTF8.GetBytes(message);
                 Byte[] buffer2 = Encoding.UTF8.GetBytes(message2);
                 thisClient.socket.Send(buffer);
@@ -679,7 +729,7 @@ namespace Server2
                     }
                 }
                 
-                string message2 = "Player(s): " + winner_names + " won this round and earned 1 point(s).\n";
+                string message2 = "Player(s): " + winner_names + " won this round and earned " + point.ToString() + " point(s).\n";
                 Byte[] buffer = Encoding.UTF8.GetBytes(message);
                 Byte[] buffer2 = Encoding.UTF8.GetBytes(message2);
                 thisClient.socket.Send(buffer);
@@ -791,6 +841,7 @@ namespace Server2
                 {
                     start_game.Enabled = false;
                     isGameStarted = true;
+                    
                 }
                 
             }
