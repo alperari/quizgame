@@ -516,8 +516,9 @@ namespace Server2
                 {
                     lock (this)
                     {
-                        if (playerSockets.Contains(thisClient))
+                        if (playerSockets.Contains(thisClient)&& isGameStarted)
                         {
+                            logs.AppendText(thisClient.name + "'s point become 0.\n");
                             barrier.RemoveParticipant();
                             
                         }

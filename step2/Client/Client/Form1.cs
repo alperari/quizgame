@@ -82,7 +82,7 @@ namespace Client
         {
             connected = false;
             terminating = true;
-            clientSocket.Close();
+            
             Environment.Exit(0);
         }
         bool game_started = false;
