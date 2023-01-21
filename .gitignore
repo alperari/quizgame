@@ -10,9 +10,4 @@ Server/Server/App.config
 Server/.vs/
 Server/Server/Program.cs
 
-
-Server2/Server2/obj/
-Server2/Server2/bin/
-Server2/Server2/App.config
-Server2/.vs/
-Server2/Server2/Program.cs
+.vs
